@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">lab11parta_cameraapp</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="captured_image">Captured Image</string>
+    <string name="take_another_photo">Take another photo</string>
+    <string name="takeanotherphoto">TakeAnotherPhoto</string>
+    <string name="dateformat">yyyyMMdd_HHmmss</string>
+</resources>
