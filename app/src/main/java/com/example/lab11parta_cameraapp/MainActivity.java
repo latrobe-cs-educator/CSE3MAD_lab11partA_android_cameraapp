@@ -104,8 +104,7 @@ public class MainActivity extends AppCompatActivity {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
                 startCameraX(cameraProvider);
             } catch (ExecutionException | InterruptedException e) {
-                // No errors need to be handled for this Future.
-                // This should never be reached.
+                Log.d(TAG, e.toString());
             }
         }, ContextCompat.getMainExecutor(this));
     }
@@ -132,18 +131,17 @@ public class MainActivity extends AppCompatActivity {
                         intent.putExtra("rotation", getCameraPhotoOrientation());
                         startActivity(intent);
                     }
-
                     @Override
                     public void onError(@NonNull ImageCaptureException exception) {
                         Toast.makeText(MainActivity.this, "Photo capture error: " + exception.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 }
-
         );
     }
 
     void startCameraX(@NonNull ProcessCameraProvider cameraProvider) {
 
+        //close all camera instances
         cameraProvider.unbindAll();
 
         //Select Camera (I.e. front/back)
@@ -164,18 +162,19 @@ public class MainActivity extends AppCompatActivity {
         cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, preview, imagecapture);
     }
 
+
     private File createImageFile() throws IOException {
         // Create an image file name
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmssS", Locale.getDefault());
         String timeStamp = sdf.format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
+        //Set the storage directory
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES); //These files are private to app and will be deleted upon uninstall
         File image = File.createTempFile(
                 imageFileName,  /* prefix */
                 ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
-
         // Save a file: path for use with ACTION_VIEW intents
         currentPhotoPath = image.getAbsolutePath();
         return image;

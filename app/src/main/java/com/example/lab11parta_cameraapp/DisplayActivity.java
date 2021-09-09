@@ -75,19 +75,30 @@ public class DisplayActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.takeAnotherPhotoBtn) {
-            //delete photo
-            File fdelete = new File(currentPhotoPath);
-            if (fdelete.exists()) {
-                if (fdelete.delete()) {
-                    Log.d(TAG, "file Deleted :" + currentPhotoPath);
-                } else {
-                    Log.d(TAG,"file not Deleted :" + currentPhotoPath);
-                }
-            }
+            deleteFile();
             Intent returnIntent = new Intent(this, MainActivity.class);
             startActivity(returnIntent);
         }
         return true;
+    }
+
+    //delete photo
+    private void deleteFile()
+    {
+        File fdelete = new File(currentPhotoPath);
+        if (fdelete.exists()) {
+            if (fdelete.delete()) {
+                Log.d(TAG, "file Deleted :" + currentPhotoPath);
+            } else {
+                Log.d(TAG,"file not Deleted :" + currentPhotoPath);
+            }
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();  // Always call the superclass method first
+        deleteFile();
     }
 
 
