@@ -20,8 +20,10 @@ import androidx.core.content.FileProvider;
 import androidx.lifecycle.LifecycleOwner;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -44,13 +46,18 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
-    String TAG = "MainAct";
-    String currentPhotoPath;
-    FloatingActionButton fab;
+    //debugging
+    private String TAG = "MainAct";
+    //path to image file
+    private String currentPhotoPath;
+    //UI Componants
+    private FloatingActionButton fab;
+    private PreviewView previewView;
+    //Camera objects
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-    PreviewView previewView;
     private ImageCapture imagecapture;
-    final String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA};
+    //Permissions
+    private final String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA};
 
 
     @Override
@@ -61,33 +68,10 @@ public class MainActivity extends AppCompatActivity {
         //Change Title
         setTitle("Take a picture");
 
-        //Button
-        fab = findViewById(R.id.bCapture);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                capturePhoto();
-            }
-        });
-
         //Bind Preview View
         previewView = findViewById(R.id.previewView);
 
-        if(hasPermissions(PERMISSIONS))
-        {
-            initFAB();
-            initCameraPreview();
-        }
-        else
-        {
-            askPermissions(PERMISSIONS);
-        }
-
-    }
-
-    private void initFAB()
-    {
-        //Button
+        //Bind Button & Set onclick listener
         fab = findViewById(R.id.bCapture);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -95,6 +79,19 @@ public class MainActivity extends AppCompatActivity {
                 capturePhoto();
             }
         });
+        fab.setEnabled(false);
+
+        // Check permissions
+        if(hasPermissions(PERMISSIONS))
+        {
+            fab.setEnabled(true); // We have permissions so we can set the image capture fab as active
+            initCameraPreview(); // initalise Camera preview
+        }
+        else
+        {
+            askPermissions(PERMISSIONS); //Not permissions so we will ask permission and initalise Camera preview IF they are granted.
+        }
+
     }
 
     private void initCameraPreview()
@@ -132,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
                         Intent intent = new Intent(getApplicationContext(), DisplayActivity.class);
                         Log.d(TAG, "Sending Path: " + currentPhotoPath);
                         intent.putExtra("path", currentPhotoPath);
+                        intent.putExtra("rotation", getCameraPhotoOrientation());
                         startActivity(intent);
                     }
 
@@ -183,6 +181,36 @@ public class MainActivity extends AppCompatActivity {
         return image;
     }
 
+    // Capture image orientation, this is required as some devices rotate the image 90 degrees on capture.
+    // By getting the rotation from the Exif data we can pass it on to the DisplayActivity to ensure the image is displayed correctly.
+    public int getCameraPhotoOrientation() {
+        int rotate = 0;
+        try {
+            ExifInterface exif = new ExifInterface(currentPhotoPath);
+            int orientation = exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL);
+
+            switch (orientation) {
+                case ExifInterface.ORIENTATION_ROTATE_270:
+                    rotate = 270;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_180:
+                    rotate = 180;
+                    break;
+                case ExifInterface.ORIENTATION_ROTATE_90:
+                    rotate = 90;
+                    break;
+            }
+
+            Log.i("RotateImage", "Exif orientation: " + orientation);
+            Log.i("RotateImage", "Rotate value: " + rotate);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return rotate;
+    }
+
     /****** Everything below here is just real-time permissions which you have used many times now******/
 
     //helper function to check permission status
@@ -214,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), isGranted -> {
                 Log.d(TAG, "Launcher result: " + isGranted.toString());
                 //permissions are granted lets get to work!
-                initFAB();
+                fab.setEnabled(true);
                 initCameraPreview();
                 if (isGranted.containsValue(false)) {
                     Toast.makeText(MainActivity.this, "At least one of the permissions was not granted, please enable permissions to ensure app functionality", Toast.LENGTH_SHORT).show();

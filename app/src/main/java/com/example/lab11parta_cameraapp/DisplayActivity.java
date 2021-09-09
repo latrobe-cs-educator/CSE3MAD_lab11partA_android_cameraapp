@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -17,6 +18,7 @@ public class DisplayActivity extends AppCompatActivity {
 
     private ImageView imgView;
     private String currentPhotoPath;
+    private int imgRotation;
     private String TAG = "DispAct";
 
     @Override
@@ -34,13 +36,30 @@ public class DisplayActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             currentPhotoPath = extras.getString("path");
+            imgRotation = extras.getInt("rotation");
         }
 
         //Set image in imageview
         Bitmap myBitmap = BitmapFactory.decodeFile(currentPhotoPath);
-        imgView.setImageBitmap(myBitmap);
 
+        //check if image require rotation and render
+        if(imgRotation == 0)
+        {
+            imgView.setImageBitmap(myBitmap);
+        }
+        else
+        {
+            imgView.setImageBitmap(rotateImage(myBitmap, imgRotation));
+        }
+    }
 
+    //rotate Bitmap
+    private static Bitmap rotateImage(Bitmap img, int degree) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(degree);
+        Bitmap rotatedImg = Bitmap.createBitmap(img, 0, 0, img.getWidth(), img.getHeight(), matrix, true);
+        img.recycle();
+        return rotatedImg;
     }
 
     // create an action bar button
